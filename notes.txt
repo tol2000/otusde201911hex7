@@ -1,0 +1,7 @@
+try {
+} catch {
+  case ex: Exception => {
+    println(s"EXCEPTION AT STEP ${i}\nValue: ${wineRow}")
+    sys.exit(1)
+  }
+}

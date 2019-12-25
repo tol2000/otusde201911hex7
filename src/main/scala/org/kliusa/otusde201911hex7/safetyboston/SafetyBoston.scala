@@ -14,8 +14,9 @@ object SafetyBoston extends App {
   val logger = Logger.getRootLogger
   logger.setLevel(Level.ERROR)
 
-  val sparkSession = SparkSession.builder().master("local").getOrCreate()
-//  val sparkContext = sparkSession.sparkContext
+  val sparkSession = SparkSession.builder().master("local[*]").getOrCreate()
+
+  //  val sparkContext = sparkSession.sparkContext
 
   println(
     "Welcome to safety Boston! ;)\n" +
@@ -41,27 +42,18 @@ object SafetyBoston extends App {
 //  offenseCodesDs.createOrReplaceTempView("codes")
 
   val viewDs = crimeDs.join(broadcast(offenseCodesDs), crimeDs("OFFENSE_CODE") === offenseCodesDs("CODE") )
-  //viewDs.createOrReplaceTempView("crime_view")
+  viewDs.createOrReplaceTempView("crimeView")
 
-  println(s"Count of viewDs: ${viewDs.count()}")
+  //println(s"Count of viewDs: ${viewDs.count()}")
 
   //val group = crimes.groupBy("NAME").count()
 
   //val sql1 = crimes.
-  //  sqlContext.sql("select name, count(*) from defaul group by name")
+  //sqlContext.sql("select name, count(*) from defaul group by name")
 
   //group.show()
 
-  //val sql = sparkSession.sql("select DISTRICT, count(*) from crime group by DISTRICT order by 1")
-  //sql.show()
-
-  //broadcast(
-//  val sql1 = sparkSession.sql("select DISTRICT, NAME, count(*) from global_temp.crime join global_temp.codes on crime.OFFENSE_CODE=codes.CODE group by NAME, DISTRICT order by 1, 2")
-//  sql1.show(5)
-
-  //offenseCodesDs.show(5)
-  //crimesDs.show(5)
-
-  //mixDs.show(10)
+  val sql = sparkSession.sql("select DISTRICT, NAME, count(*) from crimeView group by DISTRICT, NAME order by 1, 2")
+  sql.show()
 
 }

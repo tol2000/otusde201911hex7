@@ -8,6 +8,9 @@ object SafetyBoston extends App {
   val offenseCodesCsv = if (args.length > 1) args(1) else "offense_codes.csv"
   val outFolder = if (args.length > 2) args(2) else "."
 
+  val sparkSession = SparkSession.builder().master("local").getOrCreate()
+  val sparkContext = sparkSession.sparkContext
+
   println(
     "Welcome to safety Boston! ;)\n" +
       s"Crime csv: $crimeCsv\n" +
@@ -15,8 +18,6 @@ object SafetyBoston extends App {
       s"Output folder: $outFolder"
   )
   println("------------------------------------------------")
-
-//  val sparkSession = SparkSession.builder().master("local").getOrCreate()
 
 //  import sparkSession.implicits._
 

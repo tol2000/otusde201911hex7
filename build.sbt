@@ -11,3 +11,5 @@ libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.4" //% "provided
 libraryDependencies += "org.json4s" %% "json4s-native" % "3.6.7" //% "provided"
 
 libraryDependencies += "org.scala-lang" % "scala-xml" % "2.11.0-M4" //% "provided"
+
+libraryDependencies += "org.apache.logging.log4j" % "log4j" % "2.13.0" //% "provided"

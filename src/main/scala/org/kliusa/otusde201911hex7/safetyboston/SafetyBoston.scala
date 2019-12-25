@@ -1,19 +1,18 @@
 package org.kliusa.otusde201911hex7.safetyboston
 
-import java.time.format.DateTimeFormatter
-
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions._
 import org.apache.log4j._
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
 
 object SafetyBoston extends App {
+
   val crimeCsv = if (args.length > 0) args(0) else "crime.csv"
   val offenseCodesCsv = if (args.length > 1) args(1) else "offense_codes.csv"
   val outFolder = if (args.length > 2) args(2) else "."
 
   BasicConfigurator.configure()
-  //val logger = Logger.getRootLogger
-  //Level.ERROR
+  val logger = Logger.getRootLogger
+  logger.setLevel(Level.ERROR)
 
   val sparkSession = SparkSession.builder().master("local").getOrCreate()
 //  val sparkContext = sparkSession.sparkContext

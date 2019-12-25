@@ -20,19 +20,23 @@ object SafetyBoston extends App {
 
   import sparkSession.implicits._
 
-  val crimesDs = sparkSession.read.format("csv")
+  val crimeDs = sparkSession.read.format("csv")
     .option("header", "true")
     .option("inferSchema","true")
     .load(crimeCsv).as[CrimeObj]
+
   val offenseCodesDs = sparkSession.read.format("csv")
     .option("header", "true")
     .option("inferSchema","true")
     .load(offenseCodesCsv).as[OffenseObj]
 
-  crimesDs.createGlobalTempView("crime")
-  offenseCodesDs.createGlobalTempView("codes")
+//  crimesDs.createOrReplaceTempView("crime")
+//  offenseCodesDs.createOrReplaceTempView("codes")
 
-  //val mixDs = crimesDs.join(offenseCodesDs, crimesDs("OFFENSE_CODE") === offenseCodesDs("CODE") )
+  val viewDs = crimeDs.join(broadcast(offenseCodesDs), crimeDs("OFFENSE_CODE") === offenseCodesDs("CODE") )
+  //viewDs.createOrReplaceTempView("crime_view")
+
+  println(s"Count of viewDs: ${viewDs.count()}")
 
   //val group = crimes.groupBy("NAME").count()
 
@@ -41,8 +45,8 @@ object SafetyBoston extends App {
 
   //group.show()
 
-  val sql = sparkSession.sql("select DISTRICT, count(*) from global_temp.crime group by DISTRICT order by 1")
-  sql.show()
+  //val sql = sparkSession.sql("select DISTRICT, count(*) from crime group by DISTRICT order by 1")
+  //sql.show()
 
   //broadcast(
 //  val sql1 = sparkSession.sql("select DISTRICT, NAME, count(*) from global_temp.crime join global_temp.codes on crime.OFFENSE_CODE=codes.CODE group by NAME, DISTRICT order by 1, 2")

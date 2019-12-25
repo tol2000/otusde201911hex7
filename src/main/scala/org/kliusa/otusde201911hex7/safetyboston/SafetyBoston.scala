@@ -9,7 +9,7 @@ object SafetyBoston extends App {
   val outFolder = if (args.length > 2) args(2) else "."
 
   val sparkSession = SparkSession.builder().master("local").getOrCreate()
-  val sparkContext = sparkSession.sparkContext
+//  val sparkContext = sparkSession.sparkContext
 
   println(
     "Welcome to safety Boston! ;)\n" +
@@ -19,25 +19,25 @@ object SafetyBoston extends App {
   )
   println("------------------------------------------------")
 
-//  import sparkSession.implicits._
+  import sparkSession.implicits._
 
-//  val crimeDs = sparkSession.read.format("csv")
-//    .option("header", "true")
-//    .option("inferSchema","true")
-//    .load(crimeCsv).as[CrimeObj]
+  val crimeDs = sparkSession.read.format("csv")
+    .option("header", "true")
+    .option("inferSchema","true")
+    .load(crimeCsv).as[CrimeObj]
 
-//  val offenseCodesDs = sparkSession.read.format("csv")
-//    .option("header", "true")
-//    .option("inferSchema","true")
-//    .load(offenseCodesCsv).as[OffenseObj]
+  val offenseCodesDs = sparkSession.read.format("csv")
+    .option("header", "true")
+    .option("inferSchema","true")
+    .load(offenseCodesCsv).as[OffenseObj]
 
 //  crimesDs.createOrReplaceTempView("crime")
 //  offenseCodesDs.createOrReplaceTempView("codes")
 
-//  val viewDs = crimeDs.join(broadcast(offenseCodesDs), crimeDs("OFFENSE_CODE") === offenseCodesDs("CODE") )
+  val viewDs = crimeDs.join(broadcast(offenseCodesDs), crimeDs("OFFENSE_CODE") === offenseCodesDs("CODE") )
   //viewDs.createOrReplaceTempView("crime_view")
 
-//  println(s"Count of viewDs: ${viewDs.count()}")
+  println(s"Count of viewDs: ${viewDs.count()}")
 
   //val group = crimes.groupBy("NAME").count()
 

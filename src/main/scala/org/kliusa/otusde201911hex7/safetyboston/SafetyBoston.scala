@@ -53,7 +53,7 @@ object SafetyBoston extends App {
 
   //group.show()
 
-  val sql = sparkSession.sql("select DISTRICT, NAME, count(*) from crimeView group by DISTRICT, NAME order by 1, 2")
+  val sql = sparkSession.sql("select DISTRICT, NAME, count(*) from crimeView where DISTRICT is not null group by DISTRICT, NAME order by 1, 2")
   sql.show()
 
 }

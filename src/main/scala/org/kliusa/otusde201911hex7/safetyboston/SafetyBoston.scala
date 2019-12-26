@@ -16,8 +16,6 @@ object SafetyBoston extends App {
 
   val sparkSession = SparkSession.builder().master("local[*]").getOrCreate()
 
-  //  val sparkContext = sparkSession.sparkContext
-
   println(
     "Welcome to safety Boston! ;)\n" +
       s"Crime csv: $crimeCsv\n" +
@@ -38,9 +36,7 @@ object SafetyBoston extends App {
     .option("inferSchema","true")
     .load(offenseCodesCsv).as[OffenseObj]
 
-//  crimesDs.createOrReplaceTempView("crime")
-//  offenseCodesDs.createOrReplaceTempView("codes")
-
+  // Сджойним-ка в общую вьюху, а потом будем делать над ней всякие вещи...
   val viewDs = crimeDs.join(broadcast(offenseCodesDs), crimeDs("OFFENSE_CODE") === offenseCodesDs("CODE") )
   viewDs.createOrReplaceTempView("crimeView")
 

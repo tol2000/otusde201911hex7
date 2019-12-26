@@ -5,3 +5,11 @@ try {
     sys.exit(1)
   }
 }
+
+, "YEAR", "MONTH", "OFFENSE_CODE"
+
+ order by substr(district,1,1), int(substr(district,2))
+
+ https://docs.google.com/document/d/1elWInbWsLrIDqB4FMMgFTUMNEmiYev9HJUfg9LXxydE/edit
+ https://spark.apache.org/docs/latest/api/sql/index.html#initcap
+ https://cwiki.apache.org/confluence/display/Hive/LanguageManual+WindowingAndAnalytics

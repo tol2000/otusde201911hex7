@@ -1,10 +1,27 @@
 package org.kliusa.otusde201911hex7.safetyboston
 
+import scala.io.Source
 import org.apache.log4j._
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.apache.spark.sql.functions._
 
 object SafetyBoston extends App {
+
+  def readSql(name:String) = {
+    Source.fromFile(name+".sql").mkString
+  }
+
+  def writeToTsv(df:DataFrame) {
+    val tsvWithHeaderOptions: Map[String, String] = Map(
+      ("delimiter", "\t"), // Uses "\t" delimiter instead of default ","
+      ("header", "true"))  // Writes a header record with column names
+
+    df.coalesce(1)         // Writes to a single file
+      .write
+      .mode(SaveMode.Overwrite)
+      .options(tsvWithHeaderOptions)
+      .csv(df.getClass.getName+".tsv")
+  }
 
   val crimeCsv =
     if ( args.length > 0 ) args(0)
@@ -38,47 +55,27 @@ object SafetyBoston extends App {
   val crimeDs = sparkSession.read.format("csv")
     .option("header", "true")
     .option("inferSchema","true")
-    .load(crimeCsv).as[CrimeObj]
+    .load(crimeCsv) //.as[CrimeObj]
+  crimeDs.createOrReplaceTempView("crime")
 
-  val offenseCodesDs/*Src*/ = sparkSession.read.format("csv")
+  val offenseCodesDsSrc = sparkSession.read.format("csv")
     .option("header", "true")
     .option("inferSchema","true")
-    .load(offenseCodesCsv).as[OffenseObj]
-  //offenseCodesDsSrc.createOrReplaceTempView("offenseCodesDsSrc")
-  // // This is because of fail in offense codes
-  //val offenseCodesDs = sparkSession.sql("select CODE, NAME from offenseCodesDsSrc where CODE is not null and NAME is not NULL group by CODE, NAME")
+    .load(offenseCodesCsv) //.as[OffenseObj]
+  offenseCodesDsSrc.createOrReplaceTempView("offenseCodesDsSrc")
+  // This is because duplicates, etc. in offense codes
+  val offenseCodesDs = sparkSession.sql("select CODE, NAME, count(*) as dup_qnty from offenseCodesDsSrc /*where CODE=3108*/ group by CODE, NAME")
+  offenseCodesDs.createOrReplaceTempView("codes")
 
-  val tot1Ds = crimeDs.groupBy("DISTRICT")
-    .agg(
-      Map (
-        "Lat" -> "avg",
-        "Long" -> "avg"
-        , "*" -> "count"
-      )
-    )
-
-  tot1Ds.show(100)
-
-
-  val sqlCrime = crimeDs.join( broadcast(offenseCodesDs), crimeDs("OFFENSE_CODE")===offenseCodesDs("CODE"), "inner" )
-  sqlCrime.createOrReplaceTempView("sqlCrime")
-
-  val sqlTot = sparkSession.sql("select nvl(DISTRICT,'00') as district, count(*) as crimes_total, avg(Lat) as lat, avg(Long) as lng from sqlCrime group by DISTRICT")
-
-  //val sqlMonthly = sparkSession.sql("select nvl(DISTRICT,'00') as district, trim(split(NAME,'-')[0]) as offType, count(*), avg(Lat), avg(Long) from sqlCrime group by DISTRICT, trim(split(NAME,'-')[0]) order by substr(offDistrict,1,1), int(substr(offDistrict,2))")
-  //totSql.show(100)
-
-  val sqlFreq1 = sparkSession.sql("select nvl(DISTRICT,'00') as district1, trim(split(NAME,'-')[0]) as crime_type, count(*) as crimes_total from sqlCrime group by DISTRICT, trim(split(NAME,'-')[0])")
-  sqlFreq1.createOrReplaceTempView("sqlFreq1")
-  val sqlFreq = sparkSession.sql("select district1, max('wrong! '||crimes_total||' - '||crime_type) as frequent_crime_types from sqlFreq1 group by district1")
-
-  val sqlAll = sqlTot.join(sqlFreq, sqlTot("district") === sqlFreq("district1"), "left_outer" )
-    .drop("district1")
-
-  sqlAll.show(100)
-
+  val sqlTot = sparkSession.sql( readSql("totcounts") )
+  sqlTot.createOrReplaceTempView("tot")
   sqlTot.show(100)
 
-  values not equal in datasets :)
+  val sqlFreq = sparkSession.sql(readSql("sqlfreq"))
+  sqlFreq.createOrReplaceTempView("freq")
+  sqlFreq.show(100)
+
+  //val sqlAll = sparkSession.sql(readSql("sqlall"))
+  //sqlAll.show(100)
 
 }

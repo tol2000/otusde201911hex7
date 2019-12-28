@@ -13,3 +13,15 @@ try {
  https://docs.google.com/document/d/1elWInbWsLrIDqB4FMMgFTUMNEmiYev9HJUfg9LXxydE/edit
  https://spark.apache.org/docs/latest/api/sql/index.html#initcap
  https://cwiki.apache.org/confluence/display/Hive/LanguageManual+WindowingAndAnalytics
+
+  def writeToTsv(df:DataFrame) {
+    val tsvWithHeaderOptions: Map[String, String] = Map(
+      ("delimiter", "\t"), // Uses "\t" delimiter instead of default ","
+      ("header", "true"))  // Writes a header record with column names
+
+    df.coalesce(1)         // Writes to a single file
+      .write
+      .mode(SaveMode.Overwrite)
+      .options(tsvWithHeaderOptions)
+      .csv(df.getClass.getName+".tsv")
+  }

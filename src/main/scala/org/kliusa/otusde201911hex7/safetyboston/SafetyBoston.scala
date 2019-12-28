@@ -3,24 +3,14 @@ package org.kliusa.otusde201911hex7.safetyboston
 import scala.io.Source
 import org.apache.log4j._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
-import org.apache.spark.sql.functions._
 
 object SafetyBoston extends App {
 
   def readSql(name:String) = {
-    Source.fromFile(name+".sql").mkString
-  }
-
-  def writeToTsv(df:DataFrame) {
-    val tsvWithHeaderOptions: Map[String, String] = Map(
-      ("delimiter", "\t"), // Uses "\t" delimiter instead of default ","
-      ("header", "true"))  // Writes a header record with column names
-
-    df.coalesce(1)         // Writes to a single file
-      .write
-      .mode(SaveMode.Overwrite)
-      .options(tsvWithHeaderOptions)
-      .csv(df.getClass.getName+".tsv")
+    val src = Source.fromFile(name+".sql")
+    val str = src.mkString
+    src.close()
+    str
   }
 
   val crimeCsv =
@@ -67,22 +57,26 @@ object SafetyBoston extends App {
   val offenseCodesDs = sparkSession.sql("select CODE, NAME, count(*) as dup_qnty from offenseCodesDsSrc /*where CODE=3108*/ group by CODE, NAME")
   offenseCodesDs.createOrReplaceTempView("codes")
 
-  //val sqlTot = sparkSession.sql( readSql("totcounts") )
-  //sqlTot.createOrReplaceTempView("tot")
+  val sqlTot = sparkSession.sql( readSql("totcounts") )
+  sqlTot.createOrReplaceTempView("tot")
 
-  //val sqlFreq = sparkSession.sql(readSql("sqlfreq"))
-  //sqlFreq.createOrReplaceTempView("freq")
+  val sqlFreq = sparkSession.sql(readSql("sqlfreq"))
+  sqlFreq.createOrReplaceTempView("freq")
 
   val sqlMonthly = sparkSession.sql(readSql("monthly"))
   sqlMonthly.createOrReplaceTempView("monthly")
-  sqlMonthly.show(200,200)
 
-  //val sqlAll = sparkSession.sql(readSql("sqlall"))
+  val sqlAll = sparkSession.sql(readSql("sqlall"))
 
   // Show query plan to see that broadcast works...
-  //sqlFreq.explain()
-  //sqlAll.explain()
+  sqlFreq.explain()
+  sqlAll.explain()
 
-  //sqlAll.show(200, 200)
+  sqlAll.show(200, 200)
+
+  sqlAll.coalesce(1)         // Writes to a single file
+    .write
+    .mode(SaveMode.Overwrite)
+    .parquet(outFolder)
 
 }

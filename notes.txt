@@ -1,3 +1,6 @@
+-- We accept BROADCAST, BROADCASTJOIN and MAPJOIN for broadcast hint
+SELECT /*+ BROADCAST(r) */ * FROM records r JOIN src s ON r.key = s.key
+
 try {
 } catch {
   case ex: Exception => {
@@ -6,9 +9,6 @@ try {
   }
 }
 
-, "YEAR", "MONTH", "OFFENSE_CODE"
-
- order by substr(district,1,1), int(substr(district,2))
 
  https://docs.google.com/document/d/1elWInbWsLrIDqB4FMMgFTUMNEmiYev9HJUfg9LXxydE/edit
  https://spark.apache.org/docs/latest/api/sql/index.html#initcap

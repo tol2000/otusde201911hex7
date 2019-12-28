@@ -67,15 +67,22 @@ object SafetyBoston extends App {
   val offenseCodesDs = sparkSession.sql("select CODE, NAME, count(*) as dup_qnty from offenseCodesDsSrc /*where CODE=3108*/ group by CODE, NAME")
   offenseCodesDs.createOrReplaceTempView("codes")
 
-  val sqlTot = sparkSession.sql( readSql("totcounts") )
-  sqlTot.createOrReplaceTempView("tot")
-  sqlTot.show(100)
+  //val sqlTot = sparkSession.sql( readSql("totcounts") )
+  //sqlTot.createOrReplaceTempView("tot")
 
-  val sqlFreq = sparkSession.sql(readSql("sqlfreq"))
-  sqlFreq.createOrReplaceTempView("freq")
-  sqlFreq.show(100)
+  //val sqlFreq = sparkSession.sql(readSql("sqlfreq"))
+  //sqlFreq.createOrReplaceTempView("freq")
+
+  val sqlMonthly = sparkSession.sql(readSql("monthly"))
+  sqlMonthly.createOrReplaceTempView("monthly")
+  sqlMonthly.show(200,200)
 
   //val sqlAll = sparkSession.sql(readSql("sqlall"))
-  //sqlAll.show(100)
+
+  // Show query plan to see that broadcast works...
+  //sqlFreq.explain()
+  //sqlAll.explain()
+
+  //sqlAll.show(200, 200)
 
 }

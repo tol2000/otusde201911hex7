@@ -21,7 +21,7 @@ object SafetyBoston extends App {
     else "offense_codes.csv"
   val outFolder =
     if ( args.length > 2 ) args(2)
-    else "./parquetoutdir"
+    else "../parquetoutdir"
 
   BasicConfigurator.configure()
 

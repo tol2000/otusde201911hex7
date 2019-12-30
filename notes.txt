@@ -25,3 +25,20 @@ try {
       .options(tsvWithHeaderOptions)
       .csv(df.getClass.getName+".tsv")
   }
+
++--------+------------+-----------------------------------------------------------+--------------+------------------+-------------------+
+|      00|        1765|                                   M/V ACCIDENT, M/V, DRUGS|            41|25.239505193693457|-43.448774387042526|
+|      A1|       35717|                         PROPERTY, DRUGS, ASSAULT & BATTERY|           904|42.331230772598175|  -71.0199188136203|
+|      A7|       13544|            SICK/INJURED/MEDICAL, DRUGS, INVESTIGATE PERSON|           344| 42.36070260499382| -71.00394833039843|
+|     A15|        6505|                      M/V ACCIDENT, INVESTIGATE PERSON, M/V|           160|42.179155250910775| -70.74472508958512|
+|      B2|       49945|                          M/V, M/V ACCIDENT, VERBAL DISPUTE|          1298| 42.31600367732802| -71.07569930654394|
+|      B3|       35442|                    VERBAL DISPUTE, INVESTIGATE PERSON, M/V|           907| 42.28305944520107|  -71.0789491418554|
+|      C6|       23460|                           DRUGS, SICK/INJURED/MEDICAL, M/V|           593|42.212122584455464| -70.85561011772297|
+|     C11|       42530|                           M/V, DRUGS, SICK/INJURED/MEDICAL|          1115|  42.2926374090005| -71.05125995734385|
+|      D4|       41915|LARCENY SHOPLIFTING $200 & OVER, LARCENY SHOPLIFTING, DRUGS|          1084|42.341242517908846| -71.07725024947021|
+|     D14|       20127|             M/V, TOWED MOTOR VEHICLE, SICK/INJURED/MEDICAL|           505| 42.34350724510949| -71.13125461726476|
+|      E5|       13239|              SICK/INJURED/MEDICAL, INVESTIGATE PERSON, M/V|           337|42.197969994469986| -71.00440862434728|
+|     E13|       17536|                           DRUGS, SICK/INJURED/MEDICAL, M/V|           445|42.309803655710176| -71.09800478878341|
+|     E18|       17348|                    SICK/INJURED/MEDICAL, M/V, M/V ACCIDENT|           435|  42.2626806112259| -71.11891998757716|
++--------+------------+-----------------------------------------------------------+--------------+------------------+-------------------+
+

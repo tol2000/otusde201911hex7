@@ -57,6 +57,8 @@ object SafetyBoston extends App {
   val offenseCodesDs = sparkSession.sql("select CODE, NAME, count(*) as dup_qnty from offenseCodesDsSrc /*where CODE=3108*/ group by CODE, NAME")
   offenseCodesDs.createOrReplaceTempView("codes")
 
+/*
+
   val sqlTot = sparkSession.sql( readSql("totcounts") )
   sqlTot.createOrReplaceTempView("tot")
 
@@ -78,5 +80,9 @@ object SafetyBoston extends App {
     .write
     .mode(SaveMode.Overwrite)
     .parquet(outFolder)
+
+*/
+
+
 
 }

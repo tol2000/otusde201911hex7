@@ -45,19 +45,23 @@ object SafetyBoston extends App {
   val crimeDs = sparkSession.read.format("csv")
     .option("header", "true")
     .option("inferSchema","true")
-    .load(crimeCsv) //.as[CrimeObj]
-  crimeDs.createOrReplaceTempView("crime")
+    .load(crimeCsv).as[Crime]
 
   val offenseCodesDsSrc = sparkSession.read.format("csv")
     .option("header", "true")
     .option("inferSchema","true")
-    .load(offenseCodesCsv) //.as[OffenseObj]
-  offenseCodesDsSrc.createOrReplaceTempView("offenseCodesDsSrc")
+    .load(offenseCodesCsv).as[Offense]
+
   // This is because duplicates, etc. in offense codes
-  val offenseCodesDs = sparkSession.sql("select CODE, NAME, count(*) as dup_qnty from offenseCodesDsSrc /*where CODE=3108*/ group by CODE, NAME")
-  offenseCodesDs.createOrReplaceTempView("codes")
+  val offenseCodesDs = offenseCodesDsSrc.map(x => (x.CODE,x)) // reducebykey ?
+//    reduce(
+//      (x, y) => x //if(x.NAME > y.NAME) x else y
+//    )
 
 /*
+
+  crimeDs.createOrReplaceTempView("crime")
+  offenseCodesDs.createOrReplaceTempView("codes")
 
   val sqlTot = sparkSession.sql( readSql("totcounts") )
   sqlTot.createOrReplaceTempView("tot")
@@ -83,16 +87,10 @@ object SafetyBoston extends App {
 
 */
 
-  case class ClassTot(
-    INCIDENT_NUMBER:String, OFFENSE_CODE:Int, OFFENSE_CODE_GROUP:String, OFFENSE_DESCRIPTION:String,
-    DISTRICT:String, REPORTING_AREA:String, SHOOTING:String, OCCURRED_ON_DATE:String,
-    YEAR:Int, MONTH:Int, DAY_OF_WEEK:String, HOUR:Int, UCR_PART:String, STREET:String,
-    Lat:BigDecimal, Long:BigDecimal, Location:String
-  )
+  offenseCodesDsSrc.orderBy("CODE").show(100,100)
+  offenseCodesDs.show(100,100)
 
-  val dsTot = crimeDs.as[ClassTot]
-    .groupByKey(x => x.DISTRICT).count()
-    //.count()
+  //val dsTot = crimeDs.map(x => )
 
 //    .agg(
 //      Map(
@@ -102,6 +100,6 @@ object SafetyBoston extends App {
 //      )
 //    )
 
-  dsTot.show(100,100)
+  //dsTot.show(100,100)
 
 }

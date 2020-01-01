@@ -3,7 +3,6 @@ package org.kliusa.otusde201911hex7.safetyboston
 import scala.io.Source
 import org.apache.log4j._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
-
 object SafetyBoston extends App {
 
   def readSql(name:String) = {
@@ -52,13 +51,15 @@ object SafetyBoston extends App {
     .option("inferSchema","true")
     .load(offenseCodesCsv).as[Offense]
 
-  // This is because duplicates, etc. in offense codes
-  val offenseCodesDs = offenseCodesDsSrc.map(x => (x.CODE,x)) // reducebykey ?
-//    reduce(
-//      (x, y) => x //if(x.NAME > y.NAME) x else y
-//    )
+  // This is because of duplicates of codes (e.g. 311) in offense codes
+  val offenseCodesDs =
+    offenseCodesDsSrc
+      .groupByKey( x => x.CODE )
+      .reduceGroups(
+        (x,y) => if(x.NAME.length >= y.NAME.length) x else y
+      )
+      .map( x => x._2 )
 
-/*
 
   crimeDs.createOrReplaceTempView("crime")
   offenseCodesDs.createOrReplaceTempView("codes")
@@ -84,22 +85,5 @@ object SafetyBoston extends App {
     .write
     .mode(SaveMode.Overwrite)
     .parquet(outFolder)
-
-*/
-
-  offenseCodesDsSrc.orderBy("CODE").show(100,100)
-  offenseCodesDs.show(100,100)
-
-  //val dsTot = crimeDs.map(x => )
-
-//    .agg(
-//      Map(
-//        "*" -> "count",
-//        "Lat" -> "avg",
-//        "Long" -> "avg"
-//      )
-//    )
-
-  //dsTot.show(100,100)
 
 }

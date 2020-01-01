@@ -3,6 +3,8 @@ package org.kliusa.otusde201911hex7.safetyboston
 import scala.io.Source
 import org.apache.log4j._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.functions._
+
 object SafetyBoston extends App {
 
   def readSql(name:String) = {
@@ -41,10 +43,10 @@ object SafetyBoston extends App {
 
   import sparkSession.implicits._
 
-  val crimeDs = sparkSession.read.format("csv")
+  val crimeDf = sparkSession.read.format("csv")
     .option("header", "true")
     .option("inferSchema","true")
-    .load(crimeCsv).as[Crime]
+    .load(crimeCsv)
 
   val offenseCodesDsSrc = sparkSession.read.format("csv")
     .option("header", "true")
@@ -56,12 +58,12 @@ object SafetyBoston extends App {
     offenseCodesDsSrc
       .groupByKey( x => x.CODE )
       .reduceGroups(
-        (x,y) => if(x.NAME.length >= y.NAME.length) x else y
+        (x,y) => if(x.NAME.length >= y.NAME.length) x else y  // Chose max name by length, may be it will be max info :)
       )
       .map( x => x._2 )
 
-
-  crimeDs.createOrReplaceTempView("crime")
+/*
+  crimeDf.createOrReplaceTempView("crime")
   offenseCodesDs.createOrReplaceTempView("codes")
 
   val sqlTot = sparkSession.sql( readSql("totcounts") )
@@ -85,5 +87,40 @@ object SafetyBoston extends App {
     .write
     .mode(SaveMode.Overwrite)
     .parquet(outFolder)
+*/
+
+  /**
+   * Факультативный блок, демонстрирующий альтернативный способ получения трех наиболее частых видов преступлений
+   * по контрольному району C6
+   */
+
+  case class Crime(
+    DISTRICT: String,
+    TYPE: String,
+    count: Long
+  )
+
+  case class OffType(
+    CODE: Int,
+    TYPE: String
+  )
+
+  val offenseTypesDs = offenseCodesDs.map(
+    x => OffType(x.CODE, x.NAME.split(" - ")(0))
+  )
+
+  val totDs = crimeDf.join(broadcast(offenseTypesDs), $"OFFENSE_CODE" === $"CODE" )
+    //.where($"DISTRICT" === "C6")
+    .groupBy("DISTRICT", "TYPE").count()
+    .as[Crime]
+    .groupByKey( x => x.DISTRICT )
+    .flatMapGroups( (k, iTer) => iTer.toList.sortBy( x => -x.count ).take(3) )
+
+//    .flatMapGroups {
+//     case (district, iTer) =>
+//        iTer.toList.sortBy( x => -x.count ).take(3)
+//    }
+
+    .show(100,100)
 
 }

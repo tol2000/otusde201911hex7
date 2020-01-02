@@ -79,7 +79,6 @@ object SafetyBoston extends App {
 
   // Show query plan to see that broadcast works...
   sqlFreq.explain()
-  sqlAll.explain()
 
   sqlAll.show(200, 200)
 

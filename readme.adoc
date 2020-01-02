@@ -60,6 +60,142 @@ dataset api и не использовать все те возможности,
 
 == Вывод проекта
 
+=== Каталог проекта
+
 [Source, bash]
 ----
+[tolic@tolfedor otusde201911hex7]$ ll
+total 135504
+-rw-rw-r--. 1 tolic tolic      511 Dec 30 00:59 build.sbt
+-rw-rw-r--. 1 tolic tolic 57650436 Dec 30 00:59 crime.csv
+-rw-rw-r--. 1 tolic tolic 20492736 Dec 30 00:59 crimess.ods
+-rw-rw-r--. 1 tolic tolic 60512323 Dec 30 00:59 crime.tsv
+-rw-rw-r--. 1 tolic tolic      327 Dec 30 00:59 monthly.sql
+-rw-rw-r--. 1 tolic tolic     3393 Jan  2 20:30 notes.txt
+-rw-rw-r--. 1 tolic tolic    19406 Dec 30 00:59 offense_codes.csv
+-rw-rw-r--. 1 tolic tolic    19377 Dec 30 00:59 offense_codes.tsv
+drwxrwxr-x. 2 tolic tolic     4096 Jan  2 20:30 outdir
+drwxrwxr-x. 4 tolic tolic     4096 Dec 30 01:03 project
+-rw-rw-r--. 1 tolic tolic     4138 Jan  2 20:30 readme.adoc
+drwxrwxr-x. 2 tolic tolic     4096 Dec 30 01:04 spark-warehouse
+-rw-rw-r--. 1 tolic tolic      272 Dec 30 00:59 sqlall.sql
+-rw-rw-r--. 1 tolic tolic      633 Dec 30 00:59 sqlfreq.sql
+drwxrwxr-x. 3 tolic tolic     4096 Dec 30 00:59 src
+drwxrwxr-x. 4 tolic tolic     4096 Dec 30 01:03 target
+-rw-rw-r--. 1 tolic tolic      153 Dec 30 00:59 totcounts.sql
+----
+
+=== Сборка проекта
+
+[source, bash]
+----
+[tolic@tolfedor otusde201911hex7]$ sbt assembly
+[info] Loading global plugins from /home/tolic/.sbt/1.0/plugins
+[info] Loading settings for project otusde201911hex7-build from assembly.sbt ...
+[info] Loading project definition from /home/tolic/tol/work/tempwrk/otusde201911hex7/project
+[info] Loading settings for project otusde201911hex7 from build.sbt ...
+[info] Set current project to otusde201911hex7 (in build file:/home/tolic/tol/work/tempwrk/otusde201911hex7/)
+[info] Including from cache: scala-library-2.11.12.jar
+[info] Checking every *.class/*.jar file's SHA-1.
+[info] Merging files...
+[warn] Merging 'META-INF/MANIFEST.MF' with strategy 'discard'
+[warn] Strategy 'discard' was applied to a file
+[info] Assembly up to date: /home/tolic/tol/work/tempwrk/otusde201911hex7/target/scala-2.11/otusde201911hex7-assembly-1.jar
+[success] Total time: 2 s, completed Jan 2, 2020 8:36:52 PM
+----
+
+=== Запуск
+
+[source, bash]
+----
+[tolic@tolfedor otusde201911hex7]$ ll ../parquetoutdir                                                                                                                                                                                       ls: cannot access '../parquetoutdir': No such file or directory
+[tolic@tolfedor otusde201911hex7]$
+[tolic@tolfedor otusde201911hex7]$ ~/spark-2.4.4-bin-hadoop2.7/bin/spark-submit --master local[*] --class org.kliusa.otusde201911hex7.safetyboston.SafetyBoston /home/tolic/tol/work/tempwrk/otusde201911hex7/target/scala-2.11/otusde201911hex7-assembly-1.jar crime.csv offense_codes.csv ../parquetoutdir
+20/01/02 20:38:32 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Welcome to safety Boston! ;)
+Crime csv: crime.csv
+Offence codes csv: offense_codes.csv
+Output folder: ../parquetoutdir
+----
+
+=== Вывод плана запроса
+
+[source, bash]
+----
+== Physical Plan ==
+ObjectHashAggregate(keys=[district#93], functions=[collect_list(crime_type#94, 0, 0)])
++- ObjectHashAggregate(keys=[district#93], functions=[partial_collect_list(crime_type#94, 0, 0)])
+   +- *(6) Project [district#93, crime_type#94]
+      +- *(6) Filter (isnotnull(crime_type_pos#96) && (crime_type_pos#96 <= 3))
+         +- Window [row_number() windowspecdefinition(district#93, crimes_count#95L DESC NULLS LAST, specifiedwindowframe(RowFrame, unboundedpreceding$(), currentrow$())) AS crime_type_pos#96], [district#93], [crimes_count#95L DESC NULLS LAST]
+            +- *(5) Sort [district#93 ASC NULLS FIRST, crimes_count#95L DESC NULLS LAST], false, 0
+               +- Exchange hashpartitioning(district#93, 200)
+                  +- *(4) HashAggregate(keys=[coalesce(DISTRICT#14, 00)#126, split(NAME#80,  - )[0]#127], functions=[count(1)])
+                     +- Exchange hashpartitioning(coalesce(DISTRICT#14, 00)#126, split(NAME#80,  - )[0]#127, 200)
+                        +- *(3) HashAggregate(keys=[coalesce(DISTRICT#14, 00) AS coalesce(DISTRICT#14, 00)#126, split(NAME#80,  - )[0] AS split(NAME#80,  - )[0]#127], functions=[partial_count(1)])
+                           +- *(3) Project [DISTRICT#14, NAME#80]
+                              +- *(3) BroadcastHashJoin [OFFENSE_CODE#11], [CODE#79], Inner, BuildRight
+                                 :- *(3) Project [OFFENSE_CODE#11, DISTRICT#14]
+                                 :  +- *(3) Filter isnotnull(OFFENSE_CODE#11)
+                                 :     +- *(3) FileScan csv [OFFENSE_CODE#11,DISTRICT#14] Batched: false, Format: CSV, Location: InMemoryFileIndex[file:/home/tolic/tol/work/tempwrk/otusde201911hex7/crime.csv], PartitionFilters: [], PushedFilters: [IsNotNull(OFFENSE_CODE)], ReadSchema: struct<OFFENSE_CODE:int,DISTRICT:string>
+                                 +- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, false] as bigint)))
+                                    +- *(2) SerializeFromObject [assertnotnull(input[0, org.kliusa.otusde201911hex7.safetyboston.Offense, true]).CODE AS CODE#79, staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, assertnotnull(input[0, org.kliusa.otusde201911hex7.safetyboston.Offense, true]).NAME, true, false) AS NAME#80]
+                                       +- *(2) MapElements <function1>, obj#78: org.kliusa.otusde201911hex7.safetyboston.Offense
+                                          +- *(2) DeserializeToObject newInstance(class scala.Tuple2), obj#77: scala.Tuple2
+                                             +- ObjectHashAggregate(keys=[value#62], functions=[reduceaggregator(org.apache.spark.sql.expressions.ReduceAggregator@36f497b1, Some(newInstance(class org.kliusa.otusde201911hex7.safetyboston.Offense)), Some(class org.kliusa.otusde201911hex7.safetyboston.Offense), Some(StructType(StructField(CODE,IntegerType,false), StructField(NAME,StringType,true))), input[0, scala.Tuple2, true]._1 AS value#63 AS _1#66, if ((isnull(input[0, scala.Tuple2, true]._2) || None.equals)) null else named_struct(CODE, assertnotnull(assertnotnull(input[0, scala.Tuple2, true]._2)).CODE AS CODE#58, NAME, staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, assertnotnull(assertnotnull(input[0, scala.Tuple2, true]._2)).NAME, true, false) AS NAME#59) AS _2#67, newInstance(class scala.Tuple2), assertnotnull(assertnotnull(input[0, org.kliusa.otusde201911hex7.safetyboston.Offense, true])).CODE AS CODE#58, staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, assertnotnull(assertnotnull(input[0, org.kliusa.otusde201911hex7.safetyboston.Offense, true])).NAME, true, false) AS NAME#59, StructField(CODE,IntegerType,false), StructField(NAME,StringType,true), true, 0, 0)])
+                                                +- Exchange hashpartitioning(value#62, 200)
+                                                   +- ObjectHashAggregate(keys=[value#62], functions=[partial_reduceaggregator(org.apache.spark.sql.expressions.ReduceAggregator@36f497b1, Some(newInstance(class org.kliusa.otusde201911hex7.safetyboston.Offense)), Some(class org.kliusa.otusde201911hex7.safetyboston.Offense), Some(StructType(StructField(CODE,IntegerType,false), StructField(NAME,StringType,true))), input[0, scala.Tuple2, true]._1 AS value#63 AS _1#66, if ((isnull(input[0, scala.Tuple2, true]._2) || None.equals)) null else named_struct(CODE, assertnotnull(assertnotnull(input[0, scala.Tuple2, true]._2)).CODE AS CODE#58, NAME, staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, assertnotnull(assertnotnull(input[0, scala.Tuple2, true]._2)).NAME, true, false) AS NAME#59) AS _2#67, newInstance(class scala.Tuple2), assertnotnull(assertnotnull(input[0, org.kliusa.otusde201911hex7.safetyboston.Offense, true])).CODE AS CODE#58, staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, assertnotnull(assertnotnull(input[0, org.kliusa.otusde201911hex7.safetyboston.Offense, true])).NAME, true, false) AS NAME#59, StructField(CODE,IntegerType,false), StructField(NAME,StringType,true), true, 0, 0)])
+                                                      +- AppendColumns <function1>, newInstance(class org.kliusa.otusde201911hex7.safetyboston.Offense), [input[0, int, false] AS value#62]
+                                                         +- *(1) FileScan csv [CODE#54,NAME#55] Batched: false, Format: CSV, Location: InMemoryFileIndex[file:/home/tolic/tol/work/tempwrk/otusde201911hex7/offense_codes.csv], PartitionFilters: [], PushedFilters: [], ReadSchema: struct<CODE:int,NAME:string>
+----
+
+=== Вывод проекта
+
+[source, bash]
+----
++--------+------------+----------------------------------------------------------------------------+--------------+------------------+-------------------+
+|district|crimes_total|                                                        frequent_crime_types|crimes_monthly|               lat|                lng|
++--------+------------+----------------------------------------------------------------------------+--------------+------------------+-------------------+
+|      00|        1765|                                                    M/V ACCIDENT, M/V, DRUGS|            41|25.239505193693457|-43.448774387042526|
+|      A1|       35717|                                             PROPERTY, ASSAULT SIMPLE, DRUGS|           904| 42.33123077259818|  -71.0199188136203|
+|      A7|       13544|                             SICK/INJURED/MEDICAL, DRUGS, INVESTIGATE PERSON|           344| 42.36070260499382| -71.00394833039843|
+|     A15|        6505|                                       M/V ACCIDENT, INVESTIGATE PERSON, M/V|           160|42.179155250910775| -70.74472508958512|
+|      B2|       49945|                                           M/V, M/V ACCIDENT, VERBAL DISPUTE|          1298|42.316003677328034| -71.07569930654392|
+|      B3|       35442|                                     VERBAL DISPUTE, INVESTIGATE PERSON, M/V|           907| 42.28305944520107|  -71.0789491418554|
+|      C6|       23460|                                            DRUGS, SICK/INJURED/MEDICAL, M/V|           593|42.212122584455464| -70.85561011772299|
+|     C11|       42530|                               M/V, SICK/INJURED/MEDICAL, INVESTIGATE PERSON|          1115|  42.2926374090005| -71.05125995734383|
+|      D4|       41915|LARCENY SHOPLIFTING $200 & OVER, PROPERTY, LARCENY IN A BUILDING $200 & OVER|          1084| 42.34124251790884| -71.07725024947021|
+|     D14|       20127|                              M/V, TOWED MOTOR VEHICLE, SICK/INJURED/MEDICAL|           505| 42.34350724510949| -71.13125461726474|
+|      E5|       13239|                               SICK/INJURED/MEDICAL, INVESTIGATE PERSON, M/V|           337|42.197969994469986| -71.00440862434728|
+|     E13|       17536|                                            SICK/INJURED/MEDICAL, M/V, DRUGS|           445|  42.3098036557102|  -71.0980047887834|
+|     E18|       17348|                                     SICK/INJURED/MEDICAL, M/V, M/V ACCIDENT|           435|42.262680611225896| -71.11891998757714|
++--------+------------+----------------------------------------------------------------------------+--------------+------------------+-------------------+
+
++--------+----------------------------------------------------------------------------+
+|DISTRICT|                                                                        TYPE|
++--------+----------------------------------------------------------------------------+
+|    null|                                                    M/V ACCIDENT, M/V, DRUGS|
+|      A1|                                             PROPERTY, ASSAULT SIMPLE, DRUGS|
+|      A7|                             SICK/INJURED/MEDICAL, DRUGS, INVESTIGATE PERSON|
+|     A15|                                       M/V ACCIDENT, INVESTIGATE PERSON, M/V|
+|      B2|                                           M/V, M/V ACCIDENT, VERBAL DISPUTE|
+|      B3|                                     VERBAL DISPUTE, INVESTIGATE PERSON, M/V|
+|      C6|                                            DRUGS, SICK/INJURED/MEDICAL, M/V|
+|     C11|                               M/V, SICK/INJURED/MEDICAL, INVESTIGATE PERSON|
+|      D4|LARCENY SHOPLIFTING $200 & OVER, PROPERTY, LARCENY IN A BUILDING $200 & OVER|
+|     D14|                              M/V, TOWED MOTOR VEHICLE, SICK/INJURED/MEDICAL|
+|      E5|                               SICK/INJURED/MEDICAL, INVESTIGATE PERSON, M/V|
+|     E13|                                            SICK/INJURED/MEDICAL, M/V, DRUGS|
+|     E18|                                     SICK/INJURED/MEDICAL, M/V, M/V ACCIDENT|
++--------+----------------------------------------------------------------------------+
+----
+
+=== Каталог паркета
+
+[source, bash]
+----
+[tolic@tolfedor otusde201911hex7]$ ll ../parquetoutdir
+total 4
+-rw-r--r--. 1 tolic tolic 2414 Jan  2 20:39 part-00000-56eee0fa-a8bc-45a7-9a88-ccc00066a1db-c000.snappy.parquet
+-rw-r--r--. 1 tolic tolic    0 Jan  2 20:39 _SUCCESS
 ----

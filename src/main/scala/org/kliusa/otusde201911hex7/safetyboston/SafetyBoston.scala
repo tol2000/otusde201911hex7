@@ -2,7 +2,7 @@ package org.kliusa.otusde201911hex7.safetyboston
 
 import scala.io.Source
 import org.apache.log4j._
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
 import org.apache.spark.sql.functions._
 
 object SafetyBoston extends App {
@@ -62,7 +62,7 @@ object SafetyBoston extends App {
       )
       .map( x => x._2 )
 
-/*
+
   crimeDf.createOrReplaceTempView("crime")
   offenseCodesDs.createOrReplaceTempView("codes")
 
@@ -87,18 +87,24 @@ object SafetyBoston extends App {
     .write
     .mode(SaveMode.Overwrite)
     .parquet(outFolder)
-*/
+
 
   /**
-   * Факультативный блок, демонстрирующий альтернативный способ получения трех наиболее частых видов преступлений
-   * по контрольному району C6
+   * Факультативный блок, демонстрирующий альтернативный способ получения
+   * трех наиболее частых видов преступлений
    */
 
   case class Crime(
     DISTRICT: String,
     TYPE: String,
     count: Long
-  )
+  ) {
+    val delim = ", "
+    def add(x: Crime): Crime = {
+      val locDistrict = if (DISTRICT==x.DISTRICT) DISTRICT else DISTRICT+delim // for fire purposes :)
+      Crime(locDistrict, TYPE+delim+x.TYPE, count+x.count)
+    }
+  }
 
   case class OffType(
     CODE: Int,
@@ -110,17 +116,20 @@ object SafetyBoston extends App {
   )
 
   val totDs = crimeDf.join(broadcast(offenseTypesDs), $"OFFENSE_CODE" === $"CODE" )
-    //.where($"DISTRICT" === "C6")
     .groupBy("DISTRICT", "TYPE").count()
     .as[Crime]
     .groupByKey( x => x.DISTRICT )
-    .flatMapGroups( (k, iTer) => iTer.toList.sortBy( x => -x.count ).take(3) )
+    .flatMapGroups(
+      (k, iTer) => List[Crime] (
+        iTer
+          .toList
+          .sortBy( -_.count )
+          .take(3)
+          .reduce( (x, y) => x.add(y) )
+      )
+    )
+    .select($"DISTRICT", $"TYPE")
+    .orderBy( substring($"DISTRICT", 1, 1),  lpad(substring($"DISTRICT",2, 99), 3, "0") )
 
-//    .flatMapGroups {
-//     case (district, iTer) =>
-//        iTer.toList.sortBy( x => -x.count ).take(3)
-//    }
-
-    .show(100,100)
-
+    totDs.show(100,100)
 }
